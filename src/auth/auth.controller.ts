@@ -43,8 +43,8 @@ export class AuthController {
     console.log({ req });
     const user = req['user'];
 
-    return user;
-    // return this.authService.findAll();
+    // return user;
+    return this.authService.findAll();
   }
 
   @Get(':id')
