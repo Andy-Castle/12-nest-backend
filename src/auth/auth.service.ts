@@ -25,8 +25,6 @@ export class AuthService {
         ...userData,
       });
 
-      //3-Generar el JWT
-
       // 2-Guardar el usuario
       await newUser.save();
       const { password: _, ...user } = newUser.toJSON();
