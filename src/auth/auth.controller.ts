@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
@@ -38,8 +39,12 @@ export class AuthController {
 
   @UseGuards(AuthGuard)
   @Get()
-  findAll() {
-    return this.authService.findAll();
+  findAll(@Request() req: Request) {
+    console.log({ req });
+    const user = req['user'];
+
+    return user;
+    // return this.authService.findAll();
   }
 
   @Get(':id')

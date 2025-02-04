@@ -1,37 +1,50 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from '../interfaces/jwt-payload';
+import { AuthService } from '../auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private authService: AuthService,
+  ) {}
 
-  canActivate(context: ExecutionContext): Promise<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
 
     // console.log({ request });
 
     const token = this.extractTokenFromHeader(request);
 
-    console.log({ token });
+    // console.log({ token });
 
-    // if (!token) {
-    //   throw new UnauthorizedException();
-    // }
-    // try {
-    //   const payload = await this.jwtService.verifyAsync(
-    //     token,
-    //     {
-    //       secret: jwtConstants.secret
-    //     }
-    //   );
+    if (!token) {
+      throw new UnauthorizedException('There is no bearer token');
+    }
 
-    //   request['user'] = payload;
-    // } catch {
-    //   throw new UnauthorizedException();
-    // }
-    // return true;
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
+        secret: process.env.JWT_SEED,
+      });
 
-    return Promise.resolve(true);
+      const user = await this.authService.findUserById(payload.id);
+      if (!user) throw new UnauthorizedException('User does not exists');
+      if (!user.isActive) throw new UnauthorizedException('User is not active');
+
+      request['user'] = user;
+
+      // console.log({ payload });
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
+
+    return true;
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {
